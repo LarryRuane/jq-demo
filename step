@@ -1,0 +1,29 @@
+#!/bin/bash
+# Filter to pass one line to bash at a time, on each empty
+# line from the terminal. Non-empty lines are sent through
+# leaving the line from stdin still pending.
+#
+test $# -eq 1 && exec <$1
+
+let i=0
+while read stdin
+do
+    let i++
+    # remove comment for presenter
+    stdin=${stdin% *#*}
+    while :
+    do
+        echo ''
+        echo -n "$i \$ $stdin " >/dev/tty
+        read tty </dev/tty
+
+        test -z "$tty" && {
+            bash -c "$stdin"
+            break
+        }
+        # typing x means skip this command
+        test "$tty" = x && break
+        test "$tty" = q && exit 0
+        bash -c "$tty"
+    done
+done

@@ -1,0 +1,95 @@
+echo 4 | jq . # jq reads sequence of json blobs, simplest possible filter no-op
+echo '"hi"' | jq . # quoted string is also legal json blob, highlighting
+echo '"hi"' | jq . | cat # if piped or redirected to a file, highlighting disabled
+echo "\\\"hi\\\"" | jq . # double quotes okay, but have to escape
+echo "\\\"$HOME\\\"" | jq . # but that does let you substitute env variables
+echo '"$HOME"' | jq . # no substitution within single quotes
+echo hi | jq . # not a legal json blob
+echo '[8, "hello"]' | jq . # legal, pretty-printed
+echo '{"a":4,"b":7}' | jq . # legal, pretty-printed
+echo 'true' | jq . # these are json blobs (no quotes)
+echo 'false' | jq .
+echo 'True' | jq . # must be lowercase, quoted would be a string
+echo '4 3' | jq . # multiple (2) json blobs, apply filter to each independently
+echo 'true false' | jq . # result is 2 whitespace-separated json blobs 
+echo '4, 3' | jq . # not a legal json blob, not two blobs (because of comma)
+echo '[4, 3]' | jq . # fine
+echo '[4, 3][7,9]' | jq . # ok, 2 json blobs, whitespace can be empty
+echo '4 3' | jq 42 # since no dot, "replace' each input blob with "filter" blob
+echo '[4, 3]' | jq '.[1]' # zero-based indexing, strips array (single element)
+echo '[4, 3]' | jq '.[]' # strips array enclosure
+echo '[4, 3]' | jq '.[0:1]' # start, one-beyond-end indices, preserves array
+echo '[4, 3]' | jq '.[0:2]' # elements zero and 1 (4 and 3)
+echo '[4, 3]' | jq '.[0:99]' # ok if end extends beyond array
+echo '[4, 3]' | jq '.[1:99]'
+echo '[4, 3]' | jq '.[2:99]' # empty
+echo '[4, 3]' | jq '.[1:0]' # unsorted indices, empty array
+echo '[4, 3]' | jq '.[-1]' # last array element, 3 (like python)
+echo '[4, 3]' | jq '.[-2]' # second-to-last array element, 4
+echo '[4, 3]' | jq '.[-2:-1]' # don't include last
+echo '[4, 3]' | jq '.[-2:0]' # does this get second-to-last to end? no
+echo '[4, 3]' | jq '.[-2:999]' # this does
+echo '[4, 3]' | jq '.|sort' # many built-in filters
+echo '4 3' | jq '.|sort' # sort applied to 4 and 3 separately
+echo '[4] [3]' | jq '.|sort' # legal, but probably not desired
+echo '[4, "hi"]' | jq '.|sort' # apparently numbers come before strings
+echo '[10,11,12,13,14]' | jq '.|reverse' # as expected
+echo '[4, 3]' | jq '.|.' # nonsensical pipe (do nothing, do nothing)
+echo '[4, 3]' | jq '.|reverse|.|.|reverse' # does nothing
+echo '[4, 3]' | jq '.|add' # takes an array
+echo '4 3' | jq '.|add' # not an array
+echo '["hello", "world"]' | jq '.|add' # add concatenates strings
+echo '["hello", 222]' | jq '.|add' # no, types are different
+echo '"hello""world"' | jq '.|add' # not an array
+echo '[4, 3]' | jq '.,.' # apply left of comma filter, then right of comma filter
+echo '[4, 3]' | jq '.,.|add' # add operates on each json blob independently
+echo '4 3' | jq '.+100' # add sums an entire array, this sums each element
+echo '[4, 3]' | jq '.+100' # can't add a number to an array
+echo '[4, 3]' | jq '.[]|.+100' # "un-arrayize" then add 100 to each
+echo '[4, 3]' | jq 'map(.+100)' # take an array, applies filter to each element, return an array
+echo '{"foo":4, "bar": 3}' | jq '.' # pretty-print (saw earlier)
+echo '{"foo":4, "bar": 3}' | jq '.|sort' # sort only works on an array
+echo '{"foo":4, "bar": 3}' | jq '.foo' # use a key to extract a value (only the value, not key)
+echo '{"foo foo":4}' | jq '.foo foo' # unusual to have whitespace within keys
+echo '{"foo foo":4}' | jq '."foo foo"' # solution, enclose key within quotes
+echo '{"foo":4, "bar": 3}' | jq '.foo,.bar' # run two separate filters (comma)
+echo '{"foo":4, "bar": 3}' | jq '.bar,.foo' # filters run in the specified order
+echo '{"foo":4, "bar": 3}' | jq '{"replacebar":.bar,"replacefoo":.foo}' # construct a new object
+echo '{"foo":4, "bar": 3}' | jq '{"replacebar":.bar,"replacefoo":.foo,"x":.foo}' # can add new kv-pairs
+echo '{"foo":4, "bar": 3}' | jq '{"replacebar":.bar,"replacefoo":.foo,"x":"hi x"}' # constant value
+echo '{"foo":4, "bar": 3}' | jq '{"replacebar":.bar,"replacefoo":.foo},.' # two filters
+echo '{"foo":4, "bar": 3}' | jq 'map(.+1)' # map on an object applies filter to each value
+echo '{"foo":4, "bar": 3}' | jq 'map_values(.+1)' # same but preserves object structure
+echo '777' | jq '.'
+echo '777' | jq '[.]' # can "wrap" a json blob within an array
+echo '777' | jq '[.,.]' # an array with two identical elements
+echo '777' | jq '[.],[.]' # two (identical) arrays
+echo '4 3' | jq '.' # earlier example
+echo '4 3' | jq '[.]' # careful, wraps each json blob in an array separately
+echo '4 3' | jq '[.]|.[0]' # access first element of each separate array
+echo '4 3' | jq '[.]|.[1]' # the two arrays are only one element in length
+echo '[4, 3]' | jq '[.]' # wrap an array within an array
+echo '[4, 3]' | jq '[[.]]' # likewise
+echo '[4, 3]' | jq '[[[.]]]' # likewise
+echo '[4, 3]' | jq '.[]' # contrast wrapping with un-arrayize, very different
+echo '{"foo":4, "bar": 3}' | jq '.bar,.foo' # reminder, fetching values
+echo '{"foo":4, "bar": 3}' | jq '{"b":.bar,"f":.foo}' # constructing new object
+echo '{"foo":4, "bar": {"b1":8,"b2":9}}' | jq '{"b":.bar,"f":.foo}' # nested objects
+echo '{"foo":4, "bar": {"b1":8,"b2":9}}' | jq '{"b":.bar.b2,"f":.foo}' # drill down
+echo '{"foo":4, "bar": [44,55]}' | jq '{"b":.bar,"f":.foo}' # array within object
+echo '{"foo":4, "bar": [44,55]}' | jq '{"b":.bar[1],"f":.foo}' # drill down
+echo '{"foo":4, "bar": [44,55]}' | jq '{"b":[.bar,333],"f":.foo}' # create another level of array
+echo '{"a":"astr", "b":8, "c":{}}' | jq '[.a, .b+1, .c],.' # an array, and the original object
+echo '3 4 6' | jq 'select(. <= 4)' # like grep but numeric
+echo '[3, 4, 6]' | jq 'select(. <= 4)' # nothing, comparing an array with a number
+echo '[3, 4, 6]' | jq 'map(select(. <= 4))' # saw earlier, map runs the filter on each array element
+echo '3' | jq 'map(select(. < 4))' # map must take an array
+echo '3' | jq '[.]|map(select(. < 4))' # first make each input an array, then map works
+echo '{"a":3}' | jq 'map(select(. < 4))' # or an obj, value treated as an array
+seq 10 # 1 through 10, let's try to add them up
+seq 10 | jq 'add' # no, add needs an array
+seq 10 | jq '[.]|add' # no, this is a bunch of arrays, so add gets single values
+seq 10 | jq --slurp 'add' # yes, finally
+seq 10 | jq -s 'add' # shorthand
+seq 10000000 | jq -s 'add' # jq uses about 200 MB of memory! it reads the entire stdin into memory
+seq 10000000 | jq . | paste -sd+ - | bc # jq memory stays small (jq not actually needed)
