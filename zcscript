@@ -1,0 +1,28 @@
+~/zcash/src/zcash-cli getinfo | jq . # pretty-print
+curl -s https://explorer.testnet.z.cash/api/tx/025b83cbed6f87f0aa6ee3ff5185624d215dbc903627b697ed0e25aca90a840f >tx.json && mv tx.json bigtx.json # will use in next examples
+cat bigtx.json # very hard to read
+cat bigtx.json | wc # all one big line
+cat bigtx.json | jq '.' # pretty-print
+cat bigtx.json | jq '.' | wc # pretty-print
+cat bigtx.json | jq '.blockhash'
+cat bigtx.json | jq '.blockheight'
+cat bigtx.json | jq '.size'
+cat bigtx.json | jq '.blockheight+.size'
+cat bigtx.json | jq '{"nonsense":.blockheight+.size,"fees":.fees}' # need parens
+cat bigtx.json | jq '{"nonsense":(.blockheight+.size),"fees":.fees}'
+cat bigtx.json | jq '.vin' # an array
+cat bigtx.json | jq '.vin|length' # length of the array
+cat bigtx.json | jq '.vin[22]'
+cat bigtx.json | jq '.vin[22].txid'
+cat bigtx.json | jq '.vin[].txid'
+cat bigtx.json | jq '[.vin[].txid]'
+cat bigtx.json | jq '.vin[22]' # earlier example
+cat bigtx.json | jq '.vin[22]|[.sequence, .n, .vout, .sequence]'
+cat bigtx.json | jq '.vin[22]|{"ints":[.sequence, .txid, .vout, .n, .n], "asm":.scriptSig.asm}'
+cat bigtx.json | jq '.vin|.[]|.value'
+cat bigtx.json | jq '.vin|.[]|.value|sort' # sequence of items, not an array
+cat bigtx.json | jq '[.vin|.[]|.value]|sort'
+cat bigtx.json | jq '.vin|map(select(.value <= 3.0185))'
+cat bigtx.json | jq '.vin|map(select(.value > 3.8685))'
+cat bigtx.json | jq '.vin|map(select(.value > 3.8685 or .value <= 3.0185))'
+cat bigtx.json | jq '.vin|map(select(.value >= 3.171 and .value <= 3.173))'
