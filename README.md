@@ -25,3 +25,6 @@ Of course, the amazing `jq` is very feature-rich, so this demo covers
 only a small part of its capabilities. I've included what I consider most
 important. Please submit a ticket or a PR if there's something else you
 think would be useful, but keep in mind that I want to keep this simple.
+
+Another really great jq-related tool is fx:
+https://medium.com/@antonmedv/discover-how-to-use-fx-effectively-668845d2a4ea
